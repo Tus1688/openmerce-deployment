@@ -11,6 +11,8 @@ services:
     networks:
       - mysqlmain
     ports:
+      # You might don't need this if you are using a remote database
+      # Make sure you have proper firewall rules / disable this completely
       - target: 3306
         published: 3306
         mode: host
