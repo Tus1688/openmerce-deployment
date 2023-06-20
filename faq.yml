@@ -1,0 +1,31 @@
+version: '3.3'
+
+services:
+  faq:
+    image: ghcr.io/pend12/webgg:main
+    networks:
+      - traefik-public
+    deploy:
+      placement:
+        constraints: 
+          - node.role == worker
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.faq.rule=PathPrefix(`/faq`) && Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.faq.middlewares=strip-faq,https-redirect
+        - traefik.http.routers.faq.entrypoints=http
+        - traefik.http.routers.faq-https.rule=PathPrefix(`/faq`) && Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.faq-https.entrypoints=https
+        - traefik.http.routers.faq-https.tls=true
+        - traefik.http.routers.faq-https.tls.certresolver=le
+        - traefik.http.services.faq.loadbalancer.server.port=80
+        - traefik.http.middlewares.strip-faq.stripprefix.prefixes=/faq
+
+networks:
+  traefik-public:
+    external: true

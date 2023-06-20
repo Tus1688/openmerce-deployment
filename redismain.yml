@@ -1,0 +1,14 @@
+version: '3.3'
+
+services:
+  redismain:
+    image: redis:latest
+    networks:
+      - redismain
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+networks:
+  redismain:
+    external: true

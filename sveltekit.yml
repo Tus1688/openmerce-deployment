@@ -1,0 +1,34 @@
+version: '3.3'
+
+services:
+  sveltekit:
+    image: ghcr.io/colognex/openmerce-sveltekit:master
+    networks:
+      - traefik-public
+    deploy:
+      placement:
+        constraints: 
+          - node.role == worker
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.sveltekit.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.sveltekit.entrypoints=http
+        - traefik.http.routers.sveltekit.middlewares=https-redirect
+        - traefik.http.routers.sveltekit-https.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.sveltekit-https.entrypoints=https
+        - traefik.http.routers.sveltekit-https.tls=true
+        - traefik.http.routers.sveltekit-https.tls.certresolver=le
+        - traefik.http.routers.sveltekit-https.middlewares=redirectenv
+        - traefik.http.services.sveltekit.loadbalancer.server.port=3000
+        # this is the best middleware ever!
+        - traefik.http.middlewares.redirectenv.redirectregex.regex=(.*)/\.env$$
+        - traefik.http.middlewares.redirectenv.redirectregex.replacement=https://www.youtube.com/watch?v=dQw4w9WgXcQ
+
+networks:
+  traefik-public:
+    external: true

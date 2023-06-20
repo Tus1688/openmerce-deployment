@@ -1,0 +1,29 @@
+version: '3.3'
+
+services:
+  mysqlmain:
+    image: mysql:latest
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+    networks:
+      - mysqlmain
+    ports:
+      - target: 3306
+        published: 3306
+        mode: host
+    volumes: 
+      - mysqlmain:/var/lib/mysql
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+networks:
+  mysqlmain:
+    external: true
+
+volumes:
+  mysqlmain:
+    external: true

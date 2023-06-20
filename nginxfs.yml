@@ -1,0 +1,39 @@
+version: '3.3'
+
+services:
+  nginxfs:
+    image: ghcr.io/tus1688/go-nginx-fs:main
+    environment:
+      AUTHORIZATION: "${NGINX_FS_AUTHORIZATION}"
+    networks:
+      - nginxfs-main
+      - traefik-public
+    volumes:
+      - nginxfs:/usr/share/nginx/html
+    deploy:
+      restart_policy:
+        condition: on-failure
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.nginxfs.rule=PathPrefix(`/usercontent`) && Host(`${DOMAIN?Variable not set}`,`staff.${DOMAIN?Variable not set}`)
+        - traefik.http.routers.nginxfs.entrypoints=http
+        - traefik.http.routers.nginxfs.middlewares=strip-usercontent,https-redirect
+        - traefik.http.routers.nginxfs-https.rule=PathPrefix(`/usercontent`) && Host(`${DOMAIN?Variable not set}`, `staff.${DOMAIN?Variable not set}`)
+        - traefik.http.routers.nginxfs-https.entrypoints=https
+        - traefik.http.routers.nginxfs-https.tls=true
+        - traefik.http.routers.nginxfs-https.tls.certresolver=le
+        - traefik.http.routers.nginxfs-https.middlewares=strip-usercontent
+        - traefik.http.services.nginxfs.loadbalancer.server.port=5000
+        - traefik.http.middlewares.strip-usercontent.stripprefix.prefixes=/usercontent
+
+volumes:
+  nginxfs:
+    external: true
+
+networks:
+  nginxfs-main:
+    external: true
+  traefik-public:
+    external: true

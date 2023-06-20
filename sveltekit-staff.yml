@@ -1,0 +1,30 @@
+version: '3.3'
+
+services:
+  sveltekit-staff:
+    image: ghcr.io/colognex/openmerce-staff-sveltekit:master
+    networks:
+      - traefik-public
+    deploy:
+      placement:
+        constraints: 
+          - node.role == worker
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.sveltekit-staff.rule=Host(`staff.${DOMAIN?Variable not set}`)
+        - traefik.http.routers.sveltekit-staff.entrypoints=http
+        - traefik.http.routers.sveltekit-staff.middlewares=https-redirect
+        - traefik.http.routers.sveltekit-staff-https.rule=Host(`staff.${DOMAIN?Variable not set}`)
+        - traefik.http.routers.sveltekit-staff-https.entrypoints=https
+        - traefik.http.routers.sveltekit-staff-https.tls=true
+        - traefik.http.routers.sveltekit-staff-https.tls.certresolver=le
+        - traefik.http.services.sveltekit-staff.loadbalancer.server.port=3000
+
+networks:
+  traefik-public:
+    external: true

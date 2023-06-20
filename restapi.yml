@@ -1,0 +1,62 @@
+version: '3.3'
+
+services:
+  restapi:
+    image: ghcr.io/tus1688/openmerce-backend:main
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_PASS: ${DB_PASS}
+      DB_USER: ${DB_USER}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      MAILGUN_API_KEY: ${MAILGUN_API_KEY}
+      MAILGUN_DOMAIN: ${MAILGUN_DOMAIN}
+      JWT_KEY_CUSTOMER: ${JWT_KEY_CUSTOMER}
+      JWT_KEY_STAFF: ${JWT_KEY_STAFF}
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      NGINX_FS_BASE_URL: ${NGINX_FS_BASE_URL}
+      NGINX_FS_AUTHORIZATION: ${NGINX_FS_AUTHORIZATION}
+      FREIGHT_AUTHORIZATION: ${FREIGHT_AUTHORIZATION}
+      FREIGHT_BASE_URL: ${FREIGHT_BASE_URL}
+      MIDTRANS_SERVER_KEY: ${MIDTRANS_SERVER_KEY}
+      MIDTRANS_BASE_URL_SNAP: ${MIDTRANS_BASE_URL_SNAP}
+      MIDTRANS_BASE_URL_CORE_API: ${MIDTRANS_BASE_URL_CORE_API}
+      MIDTRANS_BASE_ORDER_ID: ${MIDTRANS_BASE_ORDER_ID}
+      GIN_MODE: release
+    networks:
+      - nginxfs-main 
+      - redismain 
+      - traefik-public
+      - mysqlmain
+    deploy:
+      placement:
+        constraints:
+          - node.id != node-id-you-dont-want
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.restapi.rule=PathPrefix(`/api/v1`) && Host(`${DOMAIN?Variable not set}`,`staff.${DOMAIN?Variable not set}`)
+        - traefik.http.routers.restapi.entrypoints=http
+        - traefik.http.routers.restapi.middlewares=https-redirect
+        - traefik.http.routers.restapi-https.rule=PathPrefix(`/api/v1`) && Host(`${DOMAIN?Variable not set}`, `staff.${DOMAIN?Variable not set}`)
+        - traefik.http.routers.restapi-https.entrypoints=https
+        - traefik.http.routers.restapi-https.tls=true
+        - traefik.http.routers.restapi-https.tls.certresolver=le
+        - traefik.http.services.restapi.loadbalancer.server.port=6000
+
+networks:
+  traefik-public:
+    external: true
+  redismain:
+    external: true
+  nginxfs-main:
+    external: true
+  mysqlmain:
+    external: true
